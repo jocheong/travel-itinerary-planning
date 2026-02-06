@@ -1,4 +1,3 @@
-
 const destinations = [
     {
         name: 'Bora Bora',
@@ -402,3 +401,149 @@ class DestinationCard extends HTMLElement {
 customElements.define('travel-recommender', TravelRecommender);
 customElements.define('recommender-form', RecommenderForm);
 customElements.define('destination-card', DestinationCard);
+
+class FeedbackForm extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.shadowRoot.innerHTML = `
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+                :host {
+                    --primary-color: oklch(65.88% 0.224 244.38);
+                    --secondary-color: oklch(78.9% 0.15 275.29);
+                    --accent-color: oklch(81.77% 0.176 302.7);
+                    --text-color: oklch(95% 0.02 244.38);
+                    --bg-color: oklch(34.12% 0.056 244.38);
+                    --card-bg-color: oklch(40% 0.056 244.38);
+                    display: block;
+                    padding: 2rem;
+                    background-color: var(--card-bg-color);
+                    border-radius: 0.75rem;
+                    box-shadow: 0 10px 20px oklch(0% 0 0 / 0.2);
+                    max-width: 600px;
+                    margin: 2rem auto;
+                }
+
+                h2 {
+                    color: var(--primary-color);
+                    text-align: center;
+                    margin-bottom: 2rem;
+                }
+
+                .form-group {
+                    margin-bottom: 1.5rem;
+                }
+
+                label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 500;
+                    color: var(--secondary-color);
+                }
+
+                input[type="text"],
+                input[type="email"],
+                textarea {
+                    width: 100%;
+                    padding: 0.75rem;
+                    border: 1px solid var(--secondary-color);
+                    border-radius: 0.5rem;
+                    background-color: var(--bg-color);
+                    color: var(--text-color);
+                    font-size: 1rem;
+                    box-sizing: border-box;
+                }
+
+                textarea {
+                    resize: vertical;
+                    min-height: 100px;
+                }
+
+                button {
+                    width: 100%;
+                    padding: 1rem;
+                    background-color: var(--primary-color);
+                    border: none;
+                    border-radius: 0.5rem;
+                    color: white;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px oklch(0% 0 0 / 0.3);
+                }
+
+                button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px oklch(0% 0 0 / 0.4);
+                }
+                .message {
+                    text-align: center;
+                    margin-top: 1rem;
+                    font-weight: 500;
+                }
+                .message.success {
+                    color: var(--primary-color);
+                }
+                .message.error {
+                    color: red;
+                }
+            </style>
+            <h2>Provide Feedback</h2>
+            <form action="https://formspree.io/f/mgolwkaq" method="POST">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message:</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                <button type="submit">Send Feedback</button>
+                <p class="message" id="form-message"></p>
+            </form>
+        `;
+        this.form = this.shadowRoot.querySelector('form');
+        this.formMessage = this.shadowRoot.querySelector('#form-message');
+        this.form.addEventListener('submit', this.handleSubmit.bind(this));
+    }
+
+    async handleSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(this.form);
+
+        try {
+            const response = await fetch(this.form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                this.formMessage.textContent = 'Thank you for your feedback!';
+                this.formMessage.className = 'message success';
+                this.form.reset();
+            } else {
+                const data = await response.json();
+                if (data.errors) {
+                    this.formMessage.textContent = data.errors.map(error => error.message).join(', ');
+                } else {
+                    this.formMessage.textContent = 'Oops! There was a problem submitting your form.';
+                }
+                this.formMessage.className = 'message error';
+            }
+        } catch (error) {
+            this.formMessage.textContent = 'Oops! There was a network error.';
+            this.formMessage.className = 'message error';
+        }
+    }
+}
+customElements.define('feedback-form', FeedbackForm);
